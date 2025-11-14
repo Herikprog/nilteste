@@ -20,23 +20,14 @@ export default async function handler(req, res) {
     }
 
     try {
-        let body;
-        if (typeof req.body === 'string') {
-            try {
-                body = JSON.parse(req.body);
-            } catch (e) {
-                return res.status(400).json({ message: 'JSON inválido no corpo da requisição' });
-            }
-        } else if (req.body && typeof req.body === 'object') {
-            body = req.body;
-        } else {
-            return res.status(400).json({ message: 'Corpo da requisição não encontrado' });
-        }
-
-        const { name, email, phone, service, date, time, notes } = body;
+        // Usar req.body diretamente (o Express já faz o parse)
+        const { name, email, phone, service, date, time, notes } = req.body;
 
         if (!name || !email || !phone || !service || !date || !time) {
-            return res.status(400).json({ message: 'Todos os campos obrigatórios devem ser preenchidos' });
+            return res.status(400).json({ 
+                success: false,
+                message: 'Todos os campos obrigatórios devem ser preenchidos' 
+            });
         }
 
         const startDateTime = createLisbonDate(date, time);
@@ -125,6 +116,7 @@ export default async function handler(req, res) {
     } catch (error) {
         console.error('Erro ao processar agendamento:', error);
         return res.status(500).json({
+            success: false,
             message: 'Erro ao processar agendamento',
             error: error.message
         });
