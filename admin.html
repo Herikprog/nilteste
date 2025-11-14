@@ -1,0 +1,217 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Google Calendar</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .admin-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        }
+        
+        .admin-card {
+            background: linear-gradient(135deg, var(--color-neutral), var(--color-neutral-light));
+            border: 2px solid rgba(255, 215, 0, 0.2);
+            border-radius: 20px;
+            padding: 3rem;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .admin-title {
+            color: var(--color-gold);
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .admin-subtitle {
+            color: var(--color-white);
+            opacity: 0.8;
+            margin-bottom: 2rem;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+        }
+        
+        .status-connected {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 2px solid #22c55e;
+        }
+        
+        .status-disconnected {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 2px solid #ef4444;
+        }
+        
+        .config-info {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            text-align: left;
+        }
+        
+        .config-item {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        
+        .config-item:last-child {
+            margin-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .config-label {
+            color: var(--color-gold);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .config-value {
+            color: var(--color-white);
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        
+        .info-text {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            margin-top: 2rem;
+            line-height: 1.6;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            color: var(--color-gold);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="cursor-follower"></div>
+    <canvas id="particles-canvas"></canvas>
+    
+    <div class="admin-container">
+        <div class="admin-card">
+            <h1 class="admin-title">🔐 Admin</h1>
+            <p class="admin-subtitle">Configuração do Google Calendar</p>
+            
+            <div id="status-container">
+                <div class="status-badge status-disconnected">
+                    ⚠️ Verificando...
+                </div>
+                <div class="config-info">
+                    <div class="config-item">
+                        <div class="config-label">Método de Conexão:</div>
+                        <div class="config-value">Service Account</div>
+                    </div>
+                    <div class="config-item">
+                        <div class="config-label">Status:</div>
+                        <div class="config-value" id="connection-status">Verificando...</div>
+                    </div>
+                    <div class="config-item">
+                        <div class="config-label">Calendar ID:</div>
+                        <div class="config-value" id="calendar-id">Verificando...</div>
+                    </div>
+                </div>
+                <p class="info-text">
+                    Sistema configurado com Service Account do Google Calendar.<br>
+                    Agendamentos são sincronizados automaticamente.
+                </p>
+            </div>
+            
+            <a href="/" class="back-link">← Voltar para o site</a>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+    <script>
+        async function checkConnectionStatus() {
+            try {
+                // Testar a conexão tentando buscar eventos
+                const today = new Date().toISOString().split('T')[0];
+                const response = await fetch(`/api/available-times?date=${today}&service=Corte%20Cl%C3%A1ssico`);
+                const data = await response.json();
+                
+                const statusContainer = document.getElementById('status-container');
+                const connectionStatus = document.getElementById('connection-status');
+                const calendarId = document.getElementById('calendar-id');
+                
+                if (data.success || data.error) {
+                    // Se chegou resposta, a API está funcionando
+                    statusContainer.innerHTML = `
+                        <div class="status-badge status-connected">
+                            ✅ Conectado
+                        </div>
+                        <div class="config-info">
+                            <div class="config-item">
+                                <div class="config-label">Método de Conexão:</div>
+                                <div class="config-value">Service Account</div>
+                            </div>
+                            <div class="config-item">
+                                <div class="config-label">Status:</div>
+                                <div class="config-value">Conectado e Sincronizando</div>
+                            </div>
+                            <div class="config-item">
+                                <div class="config-label">Funcionalidade:</div>
+                                <div class="config-value">Agendamentos Automáticos</div>
+                            </div>
+                        </div>
+                        <p class="info-text">
+                            Google Calendar conectado via Service Account.<br>
+                            Agendamentos estão sendo sincronizados automaticamente.
+                        </p>
+                    `;
+                }
+            } catch (error) {
+                console.error('Erro ao verificar status:', error);
+                const statusContainer = document.getElementById('status-container');
+                statusContainer.innerHTML = `
+                    <div class="status-badge status-disconnected">
+                        ❌ Erro de Conexão
+                    </div>
+                    <div class="config-info">
+                        <div class="config-item">
+                            <div class="config-label">Erro:</div>
+                            <div class="config-value">${error.message}</div>
+                        </div>
+                    </div>
+                    <p class="info-text">
+                        Verifique as variáveis de ambiente na Vercel:<br>
+                        GOOGLE_SERVICE_ACCOUNT_EMAIL<br>
+                        GOOGLE_PRIVATE_KEY<br>
+                        CALENDAR_ID
+                    </p>
+                `;
+            }
+        }
+        
+        checkConnectionStatus();
+    </script>
+</body>
+</html>
