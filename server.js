@@ -10,9 +10,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = 5000;
 
-// Middleware para parse de JSON
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Middleware para parse de JSON - CORRIGIDO
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Cache-Control headers para desenvolvimento
 app.use((req, res, next) => {
