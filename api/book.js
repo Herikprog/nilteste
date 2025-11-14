@@ -15,14 +15,23 @@ function createLisbonDate(dateString, timeString) {
 }
 
 export default async function handler(req, res) {
+    // Adicionar CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method not allowed' });
     }
 
     try {
-        // Usar req.body diretamente (o Express já faz o parse)
         const { name, email, phone, service, date, time, notes } = req.body;
 
+        // Validação básica
         if (!name || !email || !phone || !service || !date || !time) {
             return res.status(400).json({ 
                 success: false,
@@ -104,7 +113,7 @@ export default async function handler(req, res) {
                 eventLink: calendarEvent.data.htmlLink
             });
         } catch (calendarError) {
-            console.error('Google Calendar Error:', calendarError.message);
+            console.error('Google Calendar Error:', calendarError);
             
             return res.status(500).json({
                 success: false,
