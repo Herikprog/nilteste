@@ -15,6 +15,15 @@ function createLisbonDate(dateString, timeString) {
 }
 
 export default async function handler(req, res) {
+    // Adicionar CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
     if (req.method !== 'GET') {
         return res.status(405).json({ message: 'Method not allowed' });
     }
@@ -23,7 +32,10 @@ export default async function handler(req, res) {
         const { date, service } = req.query;
 
         if (!date || !service) {
-            return res.status(400).json({ message: 'Data e serviço são obrigatórios' });
+            return res.status(400).json({ 
+                success: false,
+                message: 'Data e serviço são obrigatórios' 
+            });
         }
 
         const serviceDuration = getServiceDuration(service);
@@ -77,18 +89,24 @@ export default async function handler(req, res) {
         } catch (calendarError) {
             console.error('Erro ao buscar eventos do Google Calendar:', calendarError);
             
+            // Retorna todos os horários como disponíveis em caso de erro
+            const allTimes = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00'];
+            
             return res.status(200).json({
-                success: false,
+                success: true,
                 date,
                 service,
-                error: 'Erro ao buscar horários do Google Calendar',
-                details: calendarError.message
+                serviceDuration,
+                occupiedTimes: [],
+                availableTimes: allTimes,
+                note: 'Calendário offline - todos os horários mostrados como disponíveis'
             });
         }
 
     } catch (error) {
         console.error('Erro ao processar requisição:', error);
         return res.status(500).json({
+            success: false,
             message: 'Erro ao buscar horários disponíveis',
             error: error.message
         });
